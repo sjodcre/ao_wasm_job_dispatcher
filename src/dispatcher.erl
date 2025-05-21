@@ -2,6 +2,7 @@
 -export([main/1]).
 
 main(Args) ->
+    ok = job_registry:start_link(),  
     case Args of
         [Device, <<"run">>, <<"--code">>, CodeStr] ->
             % Simulate job dispatching
