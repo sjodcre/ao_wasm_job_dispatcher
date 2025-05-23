@@ -1,6 +1,7 @@
-{application, wasm_job_mock,
+{application, dispatcher,
  [{description, "WASM Job Dispatcher"},
   {vsn, "0.1.0"},
+  {mod, {dispatcher, []}},
   {modules, []},
   {registered, []},
   {applications, [kernel, stdlib]},
