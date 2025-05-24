@@ -18,12 +18,18 @@ main(Args) ->
             CodeStr = list_to_binary(CodeStrStr),
             {ok, JobId} = wasm64_device:run(Device, CodeStr),
             io:format("~p~n", [{ok, JobId}]);
-
+        
+        [DeviceStr, "run", "--wasm", FileName] ->
+            Device = list_to_binary(DeviceStr),
+            {ok, JobId} = wasm64_device:run_wasm(Device, FileName),
+            io:format("~p~n", [{ok, JobId}]);
+        
         [DeviceStr, "status", JobIdStr] ->
             Device = list_to_binary(DeviceStr),
             JobId = list_to_binary(JobIdStr),
             {ok, Status} = wasm64_device:status(Device, JobId),
             io:format("~p~n", [{ok, Status}]);
+
         _ ->
             usage()
     end.

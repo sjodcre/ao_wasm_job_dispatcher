@@ -1,5 +1,5 @@
 -module(job_worker).
--export([simulate/1]).
+-export([simulate/1, run_wasm_file/1]).
 
 simulate(CodeStr) ->
     timer:sleep(500),
@@ -28,3 +28,43 @@ parse_add_args(<<"add(", Rest/binary>>) ->
 
 trim_bin(Bin) when is_binary(Bin) ->
     list_to_binary(string:trim(binary_to_list(Bin))).
+
+% run_wasm_file(FileName) ->
+%     Port = open_port({spawn, "iwasm " ++ FileName}, [stream, exit_status]),
+%     collect_output(Port, "").
+
+run_wasm_file(FileName) ->
+    io:format("Running WASM: ~s~n", [FileName]),
+    % Port = open_port({spawn, "iwasm " ++ FileName}, [binary, stream, exit_status]),
+    Port = open_port({spawn, "sh -c 'iwasm " ++ FileName ++ " 2>&1'"}, [binary, stream, exit_status]),
+    collect_output(Port, []).
+
+collect_output(Port, Acc) ->
+    receive
+        {Port, {data, Data}} ->
+            io:format("Received chunk: ~p~n", [Data]),
+            collect_output(Port, [Data | Acc]);
+        {Port, {exit_status, 0}} ->
+            Output = binary_to_list(iolist_to_binary(lists:reverse(Acc))),
+            Trimmed = string:trim(Output),
+            io:format("Final Output: ~p~n", [Trimmed]),
+            Trimmed;
+        {Port, {exit_status, Code}} ->
+            io:format("Non-zero exit: ~p~n", [Code]),
+            {error, {exit_status, Code, iolist_to_binary(lists:reverse(Acc))}}
+    after 3000 ->
+        io:format("Timeout reached~n", []),
+        {error, timeout}
+    end.
+
+% collect_output(Port, Acc) ->
+%     receive
+%         {Port, {data, Data}} ->
+%             collect_output(Port, Acc ++ Data);
+%         {Port, {exit_status, 0}} ->
+%             string:trim(Acc);
+%         {Port, {exit_status, Code}} ->
+%             {error, {exit_status, Code, Acc}}
+%     after 3000 ->
+%         {error, timeout}
+%     end.
